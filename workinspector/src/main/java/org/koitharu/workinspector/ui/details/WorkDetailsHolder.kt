@@ -14,12 +14,14 @@ import org.koitharu.workinspector.databinding.WiItemWorkDetailsBinding
 import org.koitharu.workinspector.ui.WorkConstraint
 import org.koitharu.workinspector.ui.util.DurationFormat
 import org.koitharu.workinspector.ui.util.appendNullable
+import java.text.SimpleDateFormat
 
 internal class WorkDetailsHolder(
     private val binding: WiItemWorkDetailsBinding,
 ) : ViewHolder(binding.root) {
     fun onBind(item: WorkDetailsItem) {
         val context = itemView.context
+        val dateFormat = SimpleDateFormat.getDateTimeInstance()
         binding.textViewId.text = item.id
         binding.imageViewStatus.setImageResource(item.stateIcon)
         binding.imageViewStatus.contentDescription = context.getString(item.stateTitle)
@@ -37,16 +39,16 @@ internal class WorkDetailsHolder(
             buildSpannedString {
                 title { appendLine(context.getString(R.string.wi_enqueued_at)) }
                 append('\t')
-                append(
-                    DateUtils.formatDateTime(
-                        context,
-                        item.lastEnqueueTime,
-                        DateUtils.FORMAT_SHOW_TIME,
-                    ),
-                )
+                append(dateFormat.format(item.lastEnqueueTime))
                 append(" (")
                 append(DateUtils.getRelativeTimeSpanString(item.lastEnqueueTime))
                 append(')').appendLine()
+                if (item.periodicInterval != 0L) {
+                    title { appendLine(context.getString(R.string.next_scheduled_time)) }
+                    append('\t')
+                        .append(dateFormat.format(item.nextScheduleTimeMillis))
+                    appendLine()
+                }
                 if (item.periodicInterval != 0L) {
                     title { appendLine(context.getString(R.string.wi_repeat_interval)) }
                     append('\t').append(
@@ -71,6 +73,13 @@ internal class WorkDetailsHolder(
                 if (item.outputData.isNotEmpty()) {
                     title { appendLine(context.getString(R.string.wi_output_data)) }
                     item.inputData.forEach { (k, v) ->
+                        append('\t').append(k).append(": ").appendNullable(v)
+                        appendLine()
+                    }
+                }
+                if (item.progress.isNotEmpty()) {
+                    title { appendLine(context.getString(R.string.progress)) }
+                    item.progress.forEach { (k, v) ->
                         append('\t').append(k).append(": ").appendNullable(v)
                         appendLine()
                     }

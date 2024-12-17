@@ -18,4 +18,6 @@ internal data class WorkDetailsItem(
     @StringRes val stopReasonText: Int,
     val inputData: Map<String, Any?>,
     val outputData: Map<String, Any?>,
+    val progress: Map<String, Any?>,
+    val nextScheduleTimeMillis: Long,
 )

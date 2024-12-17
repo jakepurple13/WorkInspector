@@ -33,4 +33,6 @@
     <string name="wi_stop_reason_estimated_app_launch_time_changed">The system\'s estimate of when the app will be launched changed significantly enough to decide this worker shouldn\'t be running right now</string>
     <string name="wi_stop_reason">Stop reason</string>
     <string name="wi_period_count">Runs count: %d</string>
+    <string name="next_scheduled_time">Next Scheduled Time</string>
+    <string name="progress">Progress</string>
 </resources>

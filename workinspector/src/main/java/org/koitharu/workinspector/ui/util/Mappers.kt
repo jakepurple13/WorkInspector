@@ -72,10 +72,12 @@ internal fun WorkDetails.toWorkDetailsItem() =
                 .map { ChipsView.ChipModel(title = it, icon = R.drawable.wi_ic_tag) },
         inputData = input.keyValueMap,
         outputData = output.keyValueMap,
+        progress = progress.keyValueMap,
         lastEnqueueTime = lastEnqueueTime,
         periodicInterval = intervalDuration,
         stopReasonText = mapStopReason(stopReason),
         periodCount = periodCount,
+        nextScheduleTimeMillis = scheduleRequestedAt
     )
 
 @get:DrawableRes

@@ -5,10 +5,13 @@ import androidx.work.Data
 import androidx.work.NetworkType
 import androidx.work.WorkInfo
 import androidx.work.impl.WorkDatabase
+import androidx.work.workDataOf
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapLatest
+import org.intellij.lang.annotations.Language
 import org.koin.core.annotation.Singleton
 import org.koitharu.workinspector.data.details.model.WorkDetails
+import org.koitharu.workinspector.data.util.WorkTables.WORK_PROGRESS
 import org.koitharu.workinspector.data.util.WorkTables.WORK_SPEC
 import org.koitharu.workinspector.data.util.WorkTables.WORK_TAG
 import org.koitharu.workinspector.data.util.getBoolean
@@ -22,12 +25,17 @@ internal class WorkerDetailsRepository(
     suspend fun getWorkDetails(workerClassName: String): List<WorkDetails> =
         db.withTransaction {
             db.openHelper.readableDatabase.query(
-                "SELECT id, state, input, output, initial_delay, interval_duration, period_count, " +
-                    "run_attempt_count, last_enqueue_time, schedule_requested_at, stop_reason, " +
-                    "required_network_type, requires_battery_not_low, requires_charging, " +
-                    "requires_device_idle, requires_storage_not_low, (SELECT GROUP_CONCAT(tag) " +
-                    "FROM $WORK_TAG WHERE work_spec_id = id) AS tags, worker_class_name " +
-                    "FROM $WORK_SPEC WHERE worker_class_name = ? ORDER BY last_enqueue_time DESC",
+                @Language("RoomSql")
+                """
+                    SELECT id, state, input, output, initial_delay, interval_duration, period_count,  
+                    run_attempt_count, last_enqueue_time, schedule_requested_at, stop_reason,  
+                    required_network_type, requires_battery_not_low, requires_charging,  
+                    requires_device_idle, requires_storage_not_low, (SELECT GROUP_CONCAT(tag)  
+                    FROM $WORK_TAG WHERE work_spec_id = id) AS tags, worker_class_name,
+                    (SELECT progress FROM $WORK_PROGRESS as wp where work_spec_id = id)
+                    FROM $WORK_SPEC WHERE worker_class_name = ?
+                    ORDER BY last_enqueue_time DESC
+                """.trimIndent(),
                 arrayOf(workerClassName),
             ).mapAndClose { cursor ->
                 WorkDetails(
@@ -49,13 +57,16 @@ internal class WorkerDetailsRepository(
                     requiresStorageNotLow = cursor.getBoolean(15),
                     tags = cursor.getString(16).split(',').toSet(),
                     className = cursor.getString(17),
+                    progress = runCatching { cursor.getBlob(18) }
+                        .mapCatching { Data.fromByteArray(it) }
+                        .getOrDefault(workDataOf())
                 )
             }
         }
 
     fun observeWorkDetails(workerClassName: String): Flow<List<WorkDetails>> {
         return db.invalidationTracker.observeAsFlow(
-            arrayOf(WORK_SPEC, WORK_TAG),
+            arrayOf(WORK_SPEC, WORK_TAG, WORK_PROGRESS),
         ).mapLatest {
             getWorkDetails(workerClassName)
         }

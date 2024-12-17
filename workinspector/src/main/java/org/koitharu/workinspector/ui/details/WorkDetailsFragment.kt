@@ -2,7 +2,10 @@ package org.koitharu.workinspector.ui.details
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koitharu.workinspector.IsolatedKoinComponent
@@ -23,11 +26,24 @@ internal class WorkDetailsFragment : Fragment(R.layout.wi_fragment_work_list),
     ) {
         super.onViewCreated(view, savedInstanceState)
         val listAdapter = WorkDetailsAdapter()
-        binding =
-            WiFragmentWorkListBinding.bind(view).apply {
-                recyclerView.setHasFixedSize(true)
-                recyclerView.adapter = listAdapter
+        binding = WiFragmentWorkListBinding.bind(view).apply {
+            recyclerView.setHasFixedSize(true)
+            recyclerView.adapter = listAdapter
+            ViewCompat.setOnApplyWindowInsetsListener(recyclerView) { v, insets ->
+                val bars = insets.getInsets(
+                    WindowInsetsCompat.Type.systemBars()
+                            or WindowInsetsCompat.Type.displayCutout()
+                )
+                v.updatePadding(
+                    left = bars.left,
+                    top = bars.top,
+                    right = bars.right,
+                    bottom = bars.bottom,
+                )
+                WindowInsetsCompat.CONSUMED
             }
+        }
+
         viewModel.workers.collectInLifecycle(viewLifecycleOwner) {
             listAdapter.submitList(it)
             binding?.textViewHolder?.isVisible = it.isEmpty()

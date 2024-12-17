@@ -2,7 +2,10 @@ package org.koitharu.workinspector.ui.workers
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import androidx.fragment.app.commit
@@ -27,11 +30,23 @@ internal class WorkersListFragment : Fragment(R.layout.wi_fragment_work_list),
     ) {
         super.onViewCreated(view, savedInstanceState)
         val listAdapter = WorkersAdapter(this)
-        binding =
-            WiFragmentWorkListBinding.bind(view).apply {
-                recyclerView.setHasFixedSize(true)
-                recyclerView.adapter = listAdapter
+        binding = WiFragmentWorkListBinding.bind(view).apply {
+            recyclerView.setHasFixedSize(true)
+            recyclerView.adapter = listAdapter
+            ViewCompat.setOnApplyWindowInsetsListener(recyclerView) { v, insets ->
+                val bars = insets.getInsets(
+                    WindowInsetsCompat.Type.systemBars()
+                            or WindowInsetsCompat.Type.displayCutout()
+                )
+                v.updatePadding(
+                    left = bars.left,
+                    top = bars.top,
+                    right = bars.right,
+                    bottom = bars.bottom,
+                )
+                WindowInsetsCompat.CONSUMED
             }
+        }
         viewModel.workers.collectInLifecycle(viewLifecycleOwner) {
             listAdapter.submitList(it)
             binding?.textViewHolder?.isVisible = it.isEmpty()

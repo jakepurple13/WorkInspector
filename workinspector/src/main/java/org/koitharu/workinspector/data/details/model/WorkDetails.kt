@@ -23,4 +23,5 @@ internal data class WorkDetails(
     val requiresStorageNotLow: Boolean,
     val tags: Set<String>,
     val className: String,
+    val progress: Data,
 )
